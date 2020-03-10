@@ -24,7 +24,7 @@ services:
     depends_on:
       - postgresql
   BooksApp:
-    image: bookapp:var1
+    image: bookapp:ver1
     networks:
       - application
     ports:
