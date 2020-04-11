@@ -26,7 +26,7 @@ func CreateTableDb(pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	conn.Query(context.Background(), "CREATE TABLE public.books (id serial NOT NULL, title character varying(100), description character varying(1000),author character varying(100), PRIMARY KEY (id));")
+	_, err = conn.Query(context.Background(), "CREATE TABLE public.books (id serial NOT NULL, title character varying(100), description character varying(1000),author character varying(100), PRIMARY KEY (id));")
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error occured while creating database")
@@ -102,6 +102,28 @@ func DeleteBookDb(pool *pgxpool.Pool, bookId int) (Book, error) {
 	return book, err
 }
 
+func DeleteAllBooksDb(pool *pgxpool.Pool) ([]Book, error) {
+	var books []Book
+	conn, err := getConnectionForContext(pool)
+	defer conn.Release()
+
+	rows, err := conn.Query(context.Background(), "DELETE FROM books")
+	if err != nil {
+		return books, err
+	}
+
+	for rows.Next() {
+		var book Book
+		err := rows.Scan(&book.Id, &book.Title, &book.Description, &book.Author)
+		if err != nil {
+			return books, err
+		}
+		books = append(books, book)
+	}
+
+	return books, err
+}
+
 func getConnectionForContext(pool *pgxpool.Pool) (*pgxpool.Conn, error) {
 	conn, err := pool.Acquire(context.Background())
 	return conn, err
@@ -120,6 +142,16 @@ func getBooks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(resp).Encode(books)
 }
 
+func deleteAllBooks(w http.ResponseWriter, r *http.Request) {
+	resp := prepareResponseHeaders(w)
+	books, err := DeleteAllBooksDb(pool)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(resp).Encode(books)
+}
+
 func getBook(w http.ResponseWriter, r *http.Request) {
 	resp := prepareResponseHeaders(w)
 	params := mux.Vars(r)
@@ -131,6 +163,11 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	book, err := GetBookDb(pool, bookId)
+
+	if (err != nil) {
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	if (book == Book{}) {
 		resp.WriteHeader(http.StatusNotFound)
@@ -205,6 +242,7 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 
 	if (deletedBook == Book{}) {
 		resp.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(os.Stderr, "Error occured while deleting book")
 		return
 	}
 
@@ -241,7 +279,7 @@ func main() {
 	pool, _ = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	defer pool.Close()
 
-	CreateTableDb(pool)
+	//	CreateTableDb(pool)
 
 	r := mux.NewRouter()
 
@@ -250,6 +288,7 @@ func main() {
 	r.HandleFunc("/books", addBook).Methods("POST")
 	r.HandleFunc("/books/{id}", updateBook).Methods("PUT")
 	r.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
+	r.HandleFunc("/booksall", deleteAllBooks).Methods("DELETE")
 	r.HandleFunc("/books/{id}", checkBook).Methods("HEAD")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
