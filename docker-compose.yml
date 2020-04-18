@@ -13,7 +13,7 @@ services:
     ports:
       - '5432:5432'
   BooksApp:
-    image: bookapp:ver1
+    image: bookapp:latest
     networks:
       - application
     ports:
