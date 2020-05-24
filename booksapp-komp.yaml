@@ -1,0 +1,229 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kompose.cmd: kompose convert -o booksapp-komp.yaml
+      kompose.version: 1.21.0 ()
+    creationTimestamp: null
+    labels:
+      io.kompose.service: booksapp
+    name: booksapp
+  spec:
+    ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
+    selector:
+      io.kompose.service: booksapp
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kompose.cmd: kompose convert -o booksapp-komp.yaml
+      kompose.version: 1.21.0 ()
+    creationTimestamp: null
+    labels:
+      io.kompose.service: pgadmin
+    name: pgadmin
+  spec:
+    ports:
+    - name: "80"
+      port: 80
+      targetPort: 80
+    selector:
+      io.kompose.service: pgadmin
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kompose.cmd: kompose convert -o booksapp-komp.yaml
+      kompose.version: 1.21.0 ()
+    creationTimestamp: null
+    labels:
+      io.kompose.service: postgresql
+    name: postgresql
+  spec:
+    ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+    selector:
+      io.kompose.service: postgresql
+  status:
+    loadBalancer: {}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      kompose.cmd: kompose convert -o booksapp-komp.yaml
+      kompose.version: 1.21.0 ()
+    creationTimestamp: null
+    labels:
+      io.kompose.service: booksapp
+    name: booksapp
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        io.kompose.service: booksapp
+    strategy: {}
+    template:
+      metadata:
+        annotations:
+          kompose.cmd: kompose convert -o booksapp-komp.yaml
+          kompose.version: 1.21.0 ()
+        creationTimestamp: null
+        labels:
+          io.kompose.network/application: "true"
+          io.kompose.service: booksapp
+      spec:
+        containers:
+        - env:
+          - name: DATABASE_URL
+            value: postgres://postgres:P@ssw0rd123@postgresql:5432/bookApp?pool_max_conns=10
+          image: bookapp:var1
+          imagePullPolicy: ""
+          name: booksapp
+          ports:
+          - containerPort: 8080
+          resources: {}
+        restartPolicy: Always
+        serviceAccountName: ""
+        volumes: null
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: NetworkPolicy
+  metadata:
+    creationTimestamp: null
+    name: application
+  spec:
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            io.kompose.network/application: "true"
+    podSelector:
+      matchLabels:
+        io.kompose.network/application: "true"
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      kompose.cmd: kompose convert -o booksapp-komp.yaml
+      kompose.version: 1.21.0 ()
+    creationTimestamp: null
+    labels:
+      io.kompose.service: pgadmin
+    name: pgadmin
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        io.kompose.service: pgadmin
+    strategy: {}
+    template:
+      metadata:
+        annotations:
+          kompose.cmd: kompose convert -o booksapp-komp.yaml
+          kompose.version: 1.21.0 ()
+        creationTimestamp: null
+        labels:
+          io.kompose.network/application: "true"
+          io.kompose.service: pgadmin
+      spec:
+        containers:
+        - env:
+          - name: PGADMIN_DEFAULT_EMAIL
+            value: test@test.org
+          - name: PGADMIN_DEFAULT_PASSWORD
+            value: test
+          image: dpage/pgadmin4
+          imagePullPolicy: ""
+          name: pgadmin
+          ports:
+          - containerPort: 80
+          resources: {}
+        restartPolicy: Always
+        serviceAccountName: ""
+        volumes: null
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: NetworkPolicy
+  metadata:
+    creationTimestamp: null
+    name: application
+  spec:
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            io.kompose.network/application: "true"
+    podSelector:
+      matchLabels:
+        io.kompose.network/application: "true"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: null
+    labels:
+      io.kompose.network/application: "true"
+      io.kompose.service: postgresql
+    name: postgresql
+  spec:
+    containers:
+    - env:
+      - name: POSTGRES_DB
+        value: bookApp
+      - name: POSTGRES_PASSWORD
+        value: P@ssw0rd123
+      image: postgres
+      name: postgresql
+      ports:
+      - containerPort: 5432
+      resources: {}
+      volumeMounts:
+      - mountPath: /var/lib/posgresql/data
+        name: pg-data
+    restartPolicy: OnFailure
+    volumes:
+    - name: pg-data
+      persistentVolumeClaim:
+        claimName: pg-data
+  status: {}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    creationTimestamp: null
+    labels:
+      io.kompose.service: pg-data
+    name: pg-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 100Mi
+  status: {}
+- apiVersion: extensions/v1beta1
+  kind: NetworkPolicy
+  metadata:
+    creationTimestamp: null
+    name: application
+  spec:
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            io.kompose.network/application: "true"
+    podSelector:
+      matchLabels:
+        io.kompose.network/application: "true"
+kind: List
+metadata: {}
+
