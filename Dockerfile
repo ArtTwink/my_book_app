@@ -2,8 +2,8 @@
 FROM golang:latest as builder
 ADD . /app/
 WORKDIR /app
-RUN go env -w GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
-RUN echo $GOPROXY
+CMD go env -w GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
+CMD echo $GOPROXY
 RUN go get github.com/gorilla/mux
 RUN go get github.com/jackc/pgx/pgxpool
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o /BooksApp .
