@@ -2,6 +2,7 @@
 FROM golang:latest as builder
 ADD . /app/
 WORKDIR /app
+CMD export GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
 CMD go env -w GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
 CMD echo $GOPROXY
 RUN go get github.com/gorilla/mux
