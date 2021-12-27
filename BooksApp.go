@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/pgxpool"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Book struct {
@@ -164,7 +165,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 
 	book, err := GetBookDb(pool, bookId)
 
-	if (err != nil) {
+	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -279,7 +280,7 @@ func main() {
 	pool, _ = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	defer pool.Close()
 
-	//	CreateTableDb(pool)
+	CreateTableDb(pool)
 
 	r := mux.NewRouter()
 

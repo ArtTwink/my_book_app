@@ -2,12 +2,11 @@
 FROM golang:latest as builder
 ADD . /app/
 WORKDIR /app
-CMD export GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
-CMD go env -w GOPROXY="http://192.168.10.14:8081/repository/go-proxy/"
+ENV GOPROXY="http://192.168.88.35:8081/repository/Go/"
 RUN go get github.com/gorilla/mux
-RUN go get github.com/jackc/pgx/pgxpool
+RUN go get github.com/jackc/pgx/v4/pgxpool
 CMD echo $GOPROXY
-RUN GOPROXY="http://192.168.10.14:8081/repository/go-proxy/" CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o /BooksApp .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o /BooksApp .
 
 #packaging
 FROM alpine:latest
